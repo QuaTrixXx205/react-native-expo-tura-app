@@ -31,19 +31,26 @@ export default function SignUp() {
     const [errorMessage, setErrorMessage] = useState("");
     const [isFormDisabled, setIsFormDisabled] = useState(false);
 
+    const isValidEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email.trim());
+    };
+
     const isFormValid = () => {
         return (
-            !isFormDisabled && // Không bị disable do không có phòng ban
+            !isFormDisabled &&
             selectedCompany &&
             (departmentData.length === 0 || selectedDepartment) &&
             fullName.trim() &&
             phone.trim() &&
             email.trim() &&
+            isValidEmail(email) && // kiểm tra email hợp lệ
             password.trim() &&
             confirmPassword.trim() &&
             password === confirmPassword
         );
     };
+
 
     // Lấy danh sách company khi mount
     useEffect(() => {
@@ -94,7 +101,8 @@ export default function SignUp() {
                         code: d.code,
                     }));
                     setDepartmentData(mappedDepts);
-                    setSelectedDepartment(mappedDepts[0].value); // chọn mặc định phòng ban đầu tiên
+                    setSelectedDepartment(mappedDepts[0].value);
+                    setSelectedDepartmentCode(mappedDepts[0].code);
                     // setShowRegisterButton(true);
                     setDepartmentMessage('');
                     setIsFormDisabled(false);
@@ -132,6 +140,10 @@ export default function SignUp() {
         }
         if (!email.trim()) {
             setErrorMessage("Vui lòng nhập email.");
+            return;
+        }
+        if (!isValidEmail(email)) {
+            setErrorMessage("Email không hợp lệ.");
             return;
         }
         if (!password.trim()) {
