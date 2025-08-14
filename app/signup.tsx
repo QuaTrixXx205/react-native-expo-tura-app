@@ -25,10 +25,25 @@ export default function SignUp() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const [showRegisterButton, setShowRegisterButton] = useState(true);
+    // const [showRegisterButton, setShowRegisterButton] = useState(true);
     const [departmentMessage, setDepartmentMessage] = useState('');
 
     const [errorMessage, setErrorMessage] = useState("");
+    const [isFormDisabled, setIsFormDisabled] = useState(false);
+
+    const isFormValid = () => {
+        return (
+            !isFormDisabled && // Không bị disable do không có phòng ban
+            selectedCompany &&
+            (departmentData.length === 0 || selectedDepartment) &&
+            fullName.trim() &&
+            phone.trim() &&
+            email.trim() &&
+            password.trim() &&
+            confirmPassword.trim() &&
+            password === confirmPassword
+        );
+    };
 
     // Lấy danh sách company khi mount
     useEffect(() => {
@@ -55,7 +70,7 @@ export default function SignUp() {
         if (!selectedCompany) {
             setDepartmentData([]);
             setSelectedDepartment(null);
-            setShowRegisterButton(true);
+            // setShowRegisterButton(true);
             setDepartmentMessage('');
             return;
         }
@@ -68,26 +83,29 @@ export default function SignUp() {
                 if (depts.length === 0) {
                     setDepartmentData([]);
                     setSelectedDepartment(null);
-                    setShowRegisterButton(false);
+                    // setShowRegisterButton(false);
                     setDepartmentMessage('Công ty này chưa có phòng ban nào.');
+                    setIsFormDisabled(true);
                 } else {
                     // @ts-ignore
                     const mappedDepts = depts.map(d => ({
                         label: d.name,
                         value: d.id,
-                        code: d.code, 
+                        code: d.code,
                     }));
                     setDepartmentData(mappedDepts);
                     setSelectedDepartment(mappedDepts[0].value); // chọn mặc định phòng ban đầu tiên
-                    setShowRegisterButton(true);
+                    // setShowRegisterButton(true);
                     setDepartmentMessage('');
+                    setIsFormDisabled(false);
                 }
             } catch (error) {
                 console.error("Lỗi lấy phòng ban:", error);
                 setDepartmentData([]);
                 setSelectedDepartment(null);
-                setShowRegisterButton(false);
+                // setShowRegisterButton(false);
                 setDepartmentMessage('Lỗi khi lấy phòng ban.');
+                setIsFormDisabled(true);
             }
         }
 
@@ -127,7 +145,7 @@ export default function SignUp() {
 
         // Nếu qua hết kiểm tra thì xóa thông báo lỗi
         setErrorMessage("");
-        
+
         try {
             await callAPI({
                 url: "api/v1/auth/register",
@@ -186,7 +204,8 @@ export default function SignUp() {
                         valueField="value"
                         placeholder="Chọn bộ phận"
                         value={selectedDepartment}
-                        onChange={item => {setSelectedDepartment(item.value); setSelectedDepartmentCode(item.code);}}
+                        onChange={item => { setSelectedDepartment(item.value); setSelectedDepartmentCode(item.code); }}
+                        disable={isFormDisabled}
                     />
                 )}
 
@@ -201,6 +220,7 @@ export default function SignUp() {
                     placeholderTextColor={colors.text}
                     value={fullName}
                     onChangeText={setFullName}
+                    editable={!isFormDisabled}
                 />
 
                 <TextInput
@@ -210,6 +230,7 @@ export default function SignUp() {
                     keyboardType="phone-pad"
                     value={phone}
                     onChangeText={setPhone}
+                    editable={!isFormDisabled}
                 />
 
                 <TextInput
@@ -218,6 +239,7 @@ export default function SignUp() {
                     placeholderTextColor={colors.text}
                     value={email}
                     onChangeText={setEmail}
+                    editable={!isFormDisabled}
                 />
 
                 <View style={[styles.passwordContainer, { borderColor: colors.border }]}>
@@ -228,6 +250,7 @@ export default function SignUp() {
                         secureTextEntry={!showPassword}
                         value={password}
                         onChangeText={setPassword}
+                        editable={!isFormDisabled}
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                         <Ionicons
@@ -246,6 +269,7 @@ export default function SignUp() {
                         secureTextEntry={!showConfirmPassword}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
+                        editable={!isFormDisabled}
                     />
                     <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                         <Ionicons
@@ -260,7 +284,7 @@ export default function SignUp() {
                     <Text style={{ color: 'red', marginBottom: 10 }}>{errorMessage}</Text>
                 ) : null}
 
-                {showRegisterButton && (
+                {isFormValid() && (
                     <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
                         <Text style={styles.signupButtonText}>Đăng ký</Text>
                     </TouchableOpacity>
