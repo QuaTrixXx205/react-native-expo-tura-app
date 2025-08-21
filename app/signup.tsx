@@ -1,359 +1,652 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Image, Keyboard } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useState, useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { Dropdown } from 'react-native-element-dropdown';
-import { useRouter } from "expo-router";
-import { callAPI } from '../scripts/axiosCall';
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@react-navigation/native";
+import { router } from "expo-router";
+import React, { useRef, useState } from "react";
+import {
+    Animated,
+    Dimensions,
+    Keyboard,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    Image
+} from "react-native";
 
-export default function SignUp() {
+const { width } = Dimensions.get("window");
+
+export default function SignUpSteps() {
     const { colors } = useTheme();
-    const router = useRouter();
 
-    const [companyData, setCompanyData] = useState([]);
-    const [selectedCompany, setSelectedCompany] = useState(null);
+    const [step, setStep] = useState(0);
+    const translateX = useRef(new Animated.Value(0)).current;
+    const khacAnim = useRef(new Animated.Value(0)).current; // animation cho input
 
-    const [departmentData, setDepartmentData] = useState([]);
-    const [selectedDepartment, setSelectedDepartment] = useState(null);
-    const [selectedDepartmentCode, setSelectedDepartmentCode] = useState<string | null>(null);
+    // State để toggle expand
+    const [expanded, setExpanded] = useState(false);
 
-    const [fullName, setFullName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [khacText, setKhacText] = useState("");
 
-    // const [showRegisterButton, setShowRegisterButton] = useState(true);
-    const [departmentMessage, setDepartmentMessage] = useState('');
-
-    const [errorMessage, setErrorMessage] = useState("");
-    const [isFormDisabled, setIsFormDisabled] = useState(false);
-
-    const isValidEmail = (email: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email.trim());
-    };
-
-    const isFormValid = () => {
-        return (
-            !isFormDisabled &&
-            selectedCompany &&
-            (departmentData.length === 0 || selectedDepartment) &&
-            fullName.trim() &&
-            phone.trim() &&
-            email.trim() &&
-            isValidEmail(email) && // kiểm tra email hợp lệ
-            password.trim() &&
-            confirmPassword.trim() &&
-            password === confirmPassword
-        );
-    };
-
-
-    // Lấy danh sách company khi mount
-    useEffect(() => {
-        async function fetchCompanies() {
-            try {
-                const res = await callAPI({ url: 'api/v1/company', method: 'GET' });
-                const companiesArray = Array.isArray(res) ? res : res.data ?? [];
-                // @ts-ignore
-                const mapped = companiesArray.map(c => ({
-                    ...c,
-                    label: `${c.code} - ${c.name}`,
-                    value: c.id,  // dùng id làm value cho dropdown
-                }));
-                setCompanyData(mapped);
-            } catch (error) {
-                console.error("Lỗi lấy company:", error);
-            }
-        }
-        fetchCompanies();
-    }, []);
-
-    // Khi user chọn công ty -> gọi API lấy phòng ban tương ứng
-    useEffect(() => {
-        if (!selectedCompany) {
-            setDepartmentData([]);
-            setSelectedDepartment(null);
-            // setShowRegisterButton(true);
-            setDepartmentMessage('');
-            return;
-        }
-
-        async function fetchDepartments() {
-            try {
-                const res = await callAPI({ url: `api/v1/department/company/${selectedCompany}`, method: 'GET' });
-                const depts = (res.data && Array.isArray(res.data)) ? res.data : [];
-
-                if (depts.length === 0) {
-                    setDepartmentData([]);
-                    setSelectedDepartment(null);
-                    // setShowRegisterButton(false);
-                    setDepartmentMessage('Công ty này chưa có phòng ban nào.');
-                    setIsFormDisabled(true);
-                } else {
-                    // @ts-ignore
-                    const mappedDepts = depts.map(d => ({
-                        label: d.name,
-                        value: d.id,
-                        code: d.code,
-                    }));
-                    setDepartmentData(mappedDepts);
-                    setSelectedDepartment(mappedDepts[0].value);
-                    setSelectedDepartmentCode(mappedDepts[0].code);
-                    // setShowRegisterButton(true);
-                    setDepartmentMessage('');
-                    setIsFormDisabled(false);
+    const canProceed = () => {
+        if (step === 0) {
+            return Object.entries(selected).some(([key, val]) => {
+                if (key === "khac") {
+                    return val && khacText.trim().length > 0;
                 }
-            } catch (error) {
-                console.error("Lỗi lấy phòng ban:", error);
-                setDepartmentData([]);
-                setSelectedDepartment(null);
-                // setShowRegisterButton(false);
-                setDepartmentMessage('Lỗi khi lấy phòng ban.');
-                setIsFormDisabled(true);
-            }
-        }
-
-        fetchDepartments();
-    }, [selectedCompany]);
-
-    // Hàm xử lý khi bấm đăng ký
-    const handleSignUp = async () => {
-        if (!selectedCompany) {
-            setErrorMessage("Vui lòng chọn doanh nghiệp.");
-            return;
-        }
-        if (departmentData.length > 0 && !selectedDepartment) {
-            setErrorMessage("Vui lòng chọn bộ phận.");
-            return;
-        }
-        if (!fullName.trim()) {
-            setErrorMessage("Vui lòng nhập họ và tên.");
-            return;
-        }
-        if (!phone.trim()) {
-            setErrorMessage("Vui lòng nhập số điện thoại.");
-            return;
-        }
-        if (!email.trim()) {
-            setErrorMessage("Vui lòng nhập email.");
-            return;
-        }
-        if (!isValidEmail(email)) {
-            setErrorMessage("Email không hợp lệ.");
-            return;
-        }
-        if (!password.trim()) {
-            setErrorMessage("Vui lòng nhập mật khẩu.");
-            return;
-        }
-        if (password !== confirmPassword) {
-            setErrorMessage("Mật khẩu nhập lại không khớp.");
-            return;
-        }
-
-        // Nếu qua hết kiểm tra thì xóa thông báo lỗi
-        setErrorMessage("");
-
-        try {
-            await callAPI({
-                url: "api/v1/auth/register",
-                method: "POST",
-                data: {
-                    "email": email,
-                    "username": fullName,
-                    "password": password,
-                    "Phone": phone,
-                    "departmentId": selectedDepartment,
-                    "role": selectedDepartmentCode,
-                }
+                return val;
             });
-            // điều hướng qua trang login (welcome)
-            Keyboard.dismiss();
-            router.push("/welcome");
+        }
+        if (step === 1) {
+            return (
+                formData.unitName.trim() &&
+                formData.email.trim() &&
+                formData.address.trim() &&
+                formData.phone.trim() &&
+                formData.bankAccount.trim() &&
+                formData.repName.trim() &&
+                formData.repPhone.trim() &&
+                formData.repEmail.trim()
+            );
+        }
+        return true;
+    };
 
-        } catch (error) {
-            console.error("Lỗi đăng ký:", error);
+    // Step 1
+    type ServiceKey =
+        | "luutru"
+        | "muasam"
+        | "anUong"
+        | "giaitri"
+        | "vanchuyen"
+        | "thamquan"
+        | "khac";
+
+    const [selected, setSelected] = useState<Record<ServiceKey, boolean>>({
+        luutru: false,
+        muasam: false,
+        anUong: false,
+        giaitri: false,
+        vanchuyen: false,
+        thamquan: false,
+        khac: false,
+    });
+
+    const toggleCheck = (key: ServiceKey) => {
+        const newValue = !selected[key];
+        setSelected((prev) => ({ ...prev, [key]: newValue }));
+
+        if (key === "khac") {
+            Animated.timing(khacAnim, {
+                toValue: newValue ? 1 : 0,
+                duration: 250,
+                useNativeDriver: false,
+            }).start();
+        }
+    };
+
+    // Step 2
+    const [formData, setFormData] = useState({
+        unitName: "",
+        email: "",
+        address: "",
+        phone: "",
+        bankAccount: "",
+        repName: "",
+        repPhone: "",
+        repEmail: "",
+    });
+
+    const handleChange = (field: keyof typeof formData, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+
+    const serviceOptions: { key: ServiceKey; label: string; icon: any }[] = [
+        { key: "luutru", label: "Lưu trú", icon: "bed-outline" },
+        { key: "muasam", label: "Mua sắm", icon: "cart-outline" },
+        { key: "anUong", label: "Ăn uống", icon: "restaurant-outline" },
+        { key: "giaitri", label: "Vui chơi - giải trí", icon: "game-controller-outline" },
+        { key: "vanchuyen", label: "Vận chuyển khách hàng", icon: "car-outline" },
+        { key: "thamquan", label: "Tham quan hướng dẫn", icon: "map-outline" },
+        { key: "khac", label: "Khác", icon: "ellipsis-horizontal-outline" },
+    ];
+
+    const steps = [
+        <View style={styles.stepContainer} key="step1">
+            <Text style={[styles.stepText, { color: colors.text }]}>
+                Bạn là đơn vị kinh doanh phục vụ gì trong ngành du lịch?
+            </Text>
+
+            {/* Danh sách full-width buttons */}
+            {serviceOptions.map((item) => (
+                <View key={item.key} style={{ width: "100%", marginBottom: 15 }}>
+                    <TouchableOpacity
+                        style={[
+                            styles.optionButton,
+                            {
+                                borderColor: selected[item.key] ? "#2196F3" : colors.border,
+                                backgroundColor: selected[item.key]
+                                    ? "rgba(52, 140, 199, 0.1)"
+                                    : "transparent",
+                            },
+                        ]}
+                        onPress={() => toggleCheck(item.key)}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons
+                            name={item.icon}
+                            size={22}
+                            color={selected[item.key] ? "#2196F3" : colors.text}
+                            style={{ marginRight: 12 }}
+                        />
+                        <Text
+                            style={{
+                                color: selected[item.key] ? "#2196F3" : colors.text,
+                                fontWeight: selected[item.key] ? "bold" : "normal",
+                                flex: 1,
+                                fontSize: 16,
+                            }}
+                        >
+                            {item.label}
+                        </Text>
+                        {selected[item.key] && (
+                            <Ionicons name="checkmark-circle" size={22} color="#2196F3" />
+                        )}
+                    </TouchableOpacity>
+
+                    {/* Input cho "Khác" */}
+                    {item.key === "khac" && (
+                        <Animated.View
+                            style={{
+                                overflow: "hidden",
+                                height: khacAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, 60],
+                                }),
+                                opacity: khacAnim,
+                                marginTop: 8,
+                            }}
+                        >
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    { borderColor: colors.border, color: colors.text },
+                                ]}
+                                placeholder="Nhập dịch vụ khác..."
+                                placeholderTextColor="#999"
+                                value={khacText}
+                                onChangeText={setKhacText}
+                            />
+                        </Animated.View>
+                    )}
+                </View>
+            ))}
+        </View>,
+
+        <View style={styles.stepContainer} key="step2">
+            <Text style={[styles.stepText, { color: colors.text }]}>
+                Thông tin cơ bản về đơn vị của bạn
+            </Text>
+
+            <View
+                style={[
+                    styles.card,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+            >
+                {/* Tên đơn vị */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="business-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="Tên đơn vị"
+                        placeholderTextColor="#999"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.unitName}
+                        onChangeText={text => handleChange("unitName", text)}
+                    />
+                </View>
+
+                {/* Email */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="mail-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="Email"
+                        placeholderTextColor="#999"
+                        keyboardType="email-address"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.email}
+                        onChangeText={text => handleChange("email", text)}
+                    />
+                </View>
+
+                {/* Địa chỉ */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="location-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="Địa chỉ"
+                        placeholderTextColor="#999"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.address}
+                        onChangeText={text => handleChange("address", text)}
+                    />
+                </View>
+
+                {/* Số điện thoại */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="call-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="Số điện thoại"
+                        placeholderTextColor="#999"
+                        keyboardType="phone-pad"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.phone}
+                        onChangeText={text => handleChange("phone", text)}
+                    />
+                </View>
+
+                {/* STK thanh toán */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="card-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="STK thanh toán"
+                        placeholderTextColor="#999"
+                        keyboardType="numeric"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.bankAccount}
+                        onChangeText={text => handleChange("bankAccount", text)}
+                    />
+                </View>
+
+                {/* --- Người đại diện --- */}
+                <Text
+                    style={{
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        marginTop: 20,
+                        marginBottom: 10,
+                        color: colors.text,
+                    }}
+                >
+                    Thông tin người đại diện
+                </Text>
+
+                {/* Họ và tên */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="person-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="Họ và tên"
+                        placeholderTextColor="#999"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.repName}
+                        onChangeText={text => handleChange("repName", text)}
+                    />
+                </View>
+
+                {/* SĐT người đại diện */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="call-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="SĐT người đại diện"
+                        placeholderTextColor="#999"
+                        keyboardType="phone-pad"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.repPhone}
+                        onChangeText={text => handleChange("repPhone", text)}
+                    />
+                </View>
+
+                {/* Email người đại diện */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="mail-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <TextInput
+                        placeholder="Email người đại diện"
+                        placeholderTextColor="#999"
+                        keyboardType="email-address"
+                        style={[styles.textInput, { color: colors.text }]}
+                        value={formData.repEmail}
+                        onChangeText={text => handleChange("repEmail", text)}
+                    />
+                </View>
+            </View>
+        </View>,
+
+        <View style={styles.stepContainer} key="step3">
+            <Text style={[styles.stepText, { color: colors.text }]}>
+                Xác nhận thông tin đăng ký
+            </Text>
+
+            <View
+                style={[
+                    styles.card,
+                    {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        borderRadius: 16,
+                        padding: 16,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 2,
+                    },
+                ]}
+            >
+                {/* Avatar + thông tin */}
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                        style={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: 30,
+                            backgroundColor: "#E3F2FD",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            marginRight: 15,
+                        }}
+                    >
+                        <Ionicons name="person-circle" size={50} color="#2196F3" />
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 16, fontWeight: "bold", color: colors.text }}>
+                            {formData.repName || "Chưa nhập tên người đại diện"}
+                        </Text>
+                        <Text style={{ color: colors.text, opacity: 0.7, marginTop: 4 }}>
+                            {`Đơn vị: ` + formData.unitName || "Chưa nhập tên đơn vị"}
+                        </Text>
+
+                        {/* Chips dịch vụ */}
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 6 }}>
+                            {serviceOptions.map((opt) => {
+                                if (selected[opt.key]) {
+                                    return (
+                                        <View
+                                            key={opt.key}
+                                            style={{
+                                                flexDirection: "row",
+                                                alignItems: "center",
+                                                backgroundColor: "rgba(33,150,243,0.15)",
+                                                paddingHorizontal: 12,
+                                                paddingVertical: 6,
+                                                borderRadius: 20,
+                                                marginRight: 8,
+                                                marginBottom: 8,
+                                            }}
+                                        >
+                                            <Ionicons
+                                                name={opt.icon}
+                                                size={16}
+                                                color="#2196F3"
+                                                style={{ marginRight: 5 }}
+                                            />
+                                            <Text style={{ color: "#2196F3", fontSize: 13 }}>
+                                                {opt.key === "khac" ? khacText || "Khác" : opt.label}
+                                            </Text>
+                                        </View>
+                                    );
+                                }
+                                return null;
+                            })}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Expansion button */}
+                <TouchableOpacity
+                    onPress={() => setExpanded(!expanded)}
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginTop: 12,
+                        alignSelf: "flex-start",
+                    }}
+                >
+                    <Ionicons
+                        name={expanded ? "chevron-up" : "chevron-down"}
+                        size={20}
+                        color={colors.text}
+                    />
+                    <Text style={{ marginLeft: 6, color: colors.text }}>
+                        {expanded ? "Ẩn bớt" : "Xem chi tiết"}
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Thông tin thêm */}
+                {expanded && (
+                    <View style={{ marginTop: 12 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                            <Ionicons name="mail" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                            <Text style={{ color: colors.text }}>{formData.email || "Chưa nhập"}</Text>
+                        </View>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                            <Ionicons name="location" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                            <Text style={{ color: colors.text }}>{formData.address || "Chưa nhập"}</Text>
+                        </View>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                            <Ionicons name="call" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                            <Text style={{ color: colors.text }}>{formData.phone || "Chưa nhập"}</Text>
+                        </View>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                            <Ionicons name="card" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                            <Text style={{ color: colors.text }}>{formData.bankAccount || "Chưa nhập"}</Text>
+                        </View>
+
+                        <Text
+                            style={{
+                                fontWeight: "bold",
+                                marginTop: 10,
+                                marginBottom: 6,
+                                color: colors.text,
+                            }}
+                        >
+                            Người đại diện
+                        </Text>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                            <Ionicons name="call" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                            <Text style={{ color: colors.text }}>{formData.repPhone || "Chưa nhập"}</Text>
+                        </View>
+
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                            <Ionicons name="mail" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                            <Text style={{ color: colors.text }}>{formData.repEmail || "Chưa nhập"}</Text>
+                        </View>
+                    </View>
+                )}
+            </View>
+        </View>,
+    ];
+
+    const handleNext = () => {
+        if (step < steps.length - 1) {
+            setStep(step + 1);
+            Animated.spring(translateX, {
+                toValue: -(step + 1) * width,
+                useNativeDriver: true,
+            }).start();
+        } else {
+            try {
+                Keyboard.dismiss();
+                router.push("/welcome");
+            } catch (error) {
+                console.error("Lỗi đăng ký:", error);
+            }
+        }
+    };
+
+    const handleBack = () => {
+        if (step > 0) {
+            setStep(step - 1);
+            Animated.spring(translateX, {
+                toValue: -(step - 1) * width,
+                useNativeDriver: true,
+            }).start();
         }
     };
 
     return (
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-            <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <Image
-                    source={require('../assets/images/tura-logo.png')}
-                    style={{ width: 200, height: 100, marginBottom: 20 }}
-                    resizeMode="contain"
-                />
-
-                {/* Dropdown Doanh nghiệp */}
-                <Dropdown
-                    style={[styles.dropdown, { borderColor: colors.border }]}
-                    placeholderStyle={{ color: colors.text }}
-                    selectedTextStyle={{ color: colors.text }}
-                    data={companyData}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Chọn doanh nghiệp"
-                    value={selectedCompany}
-                    onChange={item => setSelectedCompany(item.value)}
-                />
-
-                {/* Dropdown Bộ phận */}
-                {departmentData.length > 0 && (
-                    <Dropdown
-                        style={[styles.dropdown, { borderColor: colors.border }]}
-                        placeholderStyle={{ color: colors.text }}
-                        selectedTextStyle={{ color: colors.text }}
-                        data={departmentData}
-                        labelField="label"
-                        valueField="value"
-                        placeholder="Chọn bộ phận"
-                        value={selectedDepartment}
-                        onChange={item => { setSelectedDepartment(item.value); setSelectedDepartmentCode(item.code); }}
-                        disable={isFormDisabled}
-                    />
-                )}
-
-                {departmentMessage ? (
-                    <Text style={{ color: 'red', marginBottom: 10 }}>{departmentMessage}</Text>
-                ) : null}
-
-                {/* Các input còn lại */}
-                <TextInput
-                    style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-                    placeholder="Họ và tên"
-                    placeholderTextColor={colors.text}
-                    value={fullName}
-                    onChangeText={setFullName}
-                    editable={!isFormDisabled}
-                />
-
-                <TextInput
-                    style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-                    placeholder="Số điện thoại"
-                    placeholderTextColor={colors.text}
-                    keyboardType="phone-pad"
-                    value={phone}
-                    onChangeText={setPhone}
-                    editable={!isFormDisabled}
-                />
-
-                <TextInput
-                    style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-                    placeholder="Email"
-                    placeholderTextColor={colors.text}
-                    value={email}
-                    onChangeText={setEmail}
-                    editable={!isFormDisabled}
-                />
-
-                <View style={[styles.passwordContainer, { borderColor: colors.border }]}>
-                    <TextInput
-                        style={[styles.passwordInput, { color: colors.text }]}
-                        placeholder="Mật khẩu"
-                        placeholderTextColor={colors.text}
-                        secureTextEntry={!showPassword}
-                        value={password}
-                        onChangeText={setPassword}
-                        editable={!isFormDisabled}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Ionicons
-                            name={showPassword ? "eye-off-outline" : "eye-outline"}
-                            size={24}
-                            color={colors.text}
-                        />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={[styles.passwordContainer, { borderColor: colors.border }]}>
-                    <TextInput
-                        style={[styles.passwordInput, { color: colors.text }]}
-                        placeholder="Nhập lại mật khẩu"
-                        placeholderTextColor={colors.text}
-                        secureTextEntry={!showConfirmPassword}
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        editable={!isFormDisabled}
-                    />
-                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                        <Ionicons
-                            name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-                            size={24}
-                            color={colors.text}
-                        />
-                    </TouchableOpacity>
-                </View>
-
-                {errorMessage ? (
-                    <Text style={{ color: 'red', marginBottom: 10 }}>{errorMessage}</Text>
-                ) : null}
-
-                {isFormValid() && (
-                    <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
-                        <Text style={styles.signupButtonText}>Đăng ký</Text>
-                    </TouchableOpacity>
-                )}
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <Image source={require('@/assets/images/tura-logo.png')} resizeMode="contain" style={{ width: '100%', height: 100 }} ></Image>
+            {/* Slider */}
+            <View style={{ flex: 1, overflow: "hidden" }}>
+                <Animated.View
+                    style={{
+                        flexDirection: "row",
+                        width: width * steps.length,
+                        transform: [{ translateX }],
+                    }}
+                >
+                    {steps.map((s, index) => (
+                        <View style={{ width, flex: 1 }} key={index}>
+                            {s}
+                        </View>
+                    ))}
+                </Animated.View>
             </View>
-        </KeyboardAvoidingView>
+
+            {/* Buttons */}
+            <View style={styles.buttonRow}>
+                {step > 0 && (
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: "#ad1111ff" }]}
+                        onPress={handleBack}
+                    >
+                        <Text style={[styles.buttonText, { color: "white" }]}>
+                            Quay lại
+                        </Text>
+                    </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                    disabled={!canProceed()}
+                    style={[styles.button, { backgroundColor: canProceed() ? colors.primary : "#575656ff", }]}
+                    onPress={handleNext}
+                >
+                    <Text style={styles.buttonText}>
+                        {step === steps.length - 1 ? "Đăng ký" : "Tiếp theo"}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 10
+        justifyContent: "space-between",
+        overflow: "hidden",
     },
-    input: {
-        width: '95%',
-        height: 50,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-        marginBottom: 12
-    },
-    dropdown: {
-        width: '95%',
-        height: 50,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 8,
-        marginBottom: 12,
-        justifyContent: 'center'
-    },
-    passwordContainer: {
-        width: '95%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        marginBottom: 12
-    },
-    passwordInput: {
+    stepContainer: {
         flex: 1,
-        height: 50
+        justifyContent: "flex-start",
+        paddingHorizontal: 20,
     },
-    signupButton: {
-        backgroundColor: '#34C759',
-        padding: 14,
-        borderRadius: 8,
-        width: '95%',
-        alignItems: 'center',
+    stepText: {
+        fontSize: 20,
+        fontWeight: "bold",
+        textAlign: "center",
+        marginBottom: 30,
         marginTop: 10
     },
-    signupButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16
-    }
+    buttonRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 20,
+    },
+    button: {
+        flex: 1,
+        padding: 14,
+        borderRadius: 8,
+        alignItems: "center",
+        marginHorizontal: 15,
+    },
+    buttonText: {
+        fontWeight: "bold",
+        fontSize: 16,
+        color: "#fff",
+    },
+    optionButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderWidth: 2,
+        borderRadius: 10,
+        width: "100%"
+    },
+    input: {
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 10,
+        width: "100%",
+        fontSize: 15,
+    },
+    // Step 2 css
+    card: {
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 15,
+        marginTop: 10,
+    },
+    inputRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        borderBottomWidth: 1,
+        borderColor: "#ccc",
+        marginBottom: 12,
+        paddingBottom: 6,
+    },
+    inputIcon: {
+        marginRight: 10,
+    },
+    textInput: {
+        flex: 1,
+        fontSize: 15,
+        paddingVertical: 6,
+    },
+
 });
