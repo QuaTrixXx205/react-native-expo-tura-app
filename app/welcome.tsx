@@ -70,7 +70,7 @@ export default function WelcomeScreen() {
         // }
 
         // simulate dữ liệu trả về
-        const fakeUser = { username: 'Nguyễn Hào Quang', role: 'DHTK' }; 
+        const fakeUser = { username: 'Nguyễn Hào Quang', role: 'SEV' }; 
 
         setUser(fakeUser); 
         Keyboard.dismiss();

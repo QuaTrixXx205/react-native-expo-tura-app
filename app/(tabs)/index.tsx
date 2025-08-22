@@ -26,6 +26,9 @@ import HdvHome from '../../components/HDV_UI/hdv_home';
 // MKT UI Component
 import MktHome from '../../components/MKT_UI/mkt_home';
 
+// SEV UI Component
+import SevHome from '@/components/SEV_UI/sev_home';
+
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useUser();
@@ -56,11 +59,14 @@ export default function HomeScreen() {
         colors={['#2196F3', '#1976D2']}
         style={styles.headerCard}
       >
-        <View style={styles.headerTop}>
+        <View>
           <View>
-            <Text style={styles.helloText}>Xin chào 👋</Text>
             <Text style={styles.userName}>{user?.username}</Text>
-            <Text style={styles.dateText}>{currentDate}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+              <Text style={styles.dateText}>{currentDate}</Text>
+              <Text style={{color: colors.text}}>Đơn vị: Ánh sao</Text>
+            </View>
+            <Text style={{color: colors.text}}>Dịch vụ: Lưu trú - Ăn uống</Text>
           </View>
         </View>
       </LinearGradient>
@@ -126,6 +132,25 @@ export default function HomeScreen() {
                 </View>
               </>
             )}
+
+            {user?.role === 'SEV' && (
+              <>
+                {/* Menu cho MKT */}
+                <View style={styles.featureBox}>
+                  {[
+                    { icon: 'calendar-outline', label: 'Kế hoạch', },
+                    { icon: 'people-outline', label: 'Liên lạc', },
+                    { icon: 'headset-outline', label: 'Dịch vụ' },
+                    { icon: 'document-text-outline', label: 'Yêu cầu', },
+                  ].map((item, index) => (
+                    <TouchableOpacity key={index} style={styles.featureItem}>
+                      <Ionicons name={item.icon as any} size={32} color="#fff" />
+                      <Text style={styles.featureText}>{item.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
           </View>
 
           {/* Content with roles*/}
@@ -133,6 +158,7 @@ export default function HomeScreen() {
             {user?.role === 'DHTK' && <DhtkMain />}
             {user?.role === 'HDV' && <HdvHome />}
             {user?.role === 'MKT' && <MktHome />}
+            {user?.role === 'SEV' && <SevHome />}
           </View>
         </ScrollView>
       </View>
@@ -151,16 +177,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  helloText: {
-    color: '#fff',
-    fontSize: 16,
-    marginBottom: 2
   },
   userName: {
     color: '#fff',

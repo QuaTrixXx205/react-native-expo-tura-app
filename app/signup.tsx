@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
     Animated,
     Dimensions,
@@ -11,13 +11,26 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-    Image
+    Image,
+    ScrollView,
+    KeyboardAvoidingView
 } from "react-native";
+import { callAPI } from "@/scripts/axiosCall";
+import axios from "axios";
+import { Dropdown } from 'react-native-element-dropdown';
+
+export async function getBanks() {
+    const res = await axios.get("https://api.vietqr.io/v2/banks");
+    return res.data;
+}
+
 
 const { width } = Dimensions.get("window");
 
 export default function SignUpSteps() {
     const { colors } = useTheme();
+    // Scroll to top
+    const scrollViewRef = useRef(null)
 
     const [step, setStep] = useState(0);
     const translateX = useRef(new Animated.Value(0)).current;
@@ -28,25 +41,42 @@ export default function SignUpSteps() {
 
     const [khacText, setKhacText] = useState("");
 
+    // gọi API ngân hàng
+    const [banks, setBanks] = useState<any[]>([]);
+    useEffect(() => {
+        getBanks().then((res) => setBanks(res.data || []));
+    }, []);
+
+
     const canProceed = () => {
         if (step === 0) {
-            return Object.entries(selected).some(([key, val]) => {
-                if (key === "khac") {
-                    return val && khacText.trim().length > 0;
-                }
-                return val;
-            });
+            const hasOther = selected.khac;
+            const hasOtherValid = hasOther && khacText.trim().length > 0;
+
+            // Lấy danh sách các key khác "khac"
+            const hasNormalSelected = Object.entries(selected).some(
+                ([key, val]) => key !== "khac" && val
+            );
+
+            // Điều kiện pass:
+            // 1. Nếu chỉ chọn "khac" → phải có text
+            // 2. Nếu chọn "khac" + item khác → thì khac cũng phải có text
+            // 3. Nếu chỉ chọn item khác → pass luôn
+            return hasNormalSelected
+                ? !hasOther || hasOtherValid
+                : hasOtherValid;
         }
         if (step === 1) {
             return (
-                formData.unitName.trim() &&
-                formData.email.trim() &&
-                formData.address.trim() &&
-                formData.phone.trim() &&
-                formData.bankAccount.trim() &&
-                formData.repName.trim() &&
-                formData.repPhone.trim() &&
-                formData.repEmail.trim()
+                formData.tenDonVi.trim() &&
+                formData.emailDonVi.trim() &&
+                formData.diaChiDonVi.trim() &&
+                formData.sdtDonVi.trim() &&
+                formData.nganHangDonVi.trim() &&
+                formData.stkDonVi.trim() &&
+                formData.hoTenNguoiDaiDien.trim() &&
+                formData.sdtNguoiDaiDien.trim() &&
+                formData.emailNguoiDaiDien.trim()
             );
         }
         return true;
@@ -54,21 +84,21 @@ export default function SignUpSteps() {
 
     // Step 1
     type ServiceKey =
-        | "luutru"
-        | "muasam"
+        | "luuTru"
+        | "muaSam"
         | "anUong"
-        | "giaitri"
-        | "vanchuyen"
-        | "thamquan"
+        | "giaiTri"
+        | "vanChuyen"
+        | "thamQuan"
         | "khac";
 
     const [selected, setSelected] = useState<Record<ServiceKey, boolean>>({
-        luutru: false,
-        muasam: false,
+        luuTru: false,
+        muaSam: false,
         anUong: false,
-        giaitri: false,
-        vanchuyen: false,
-        thamquan: false,
+        giaiTri: false,
+        vanChuyen: false,
+        thamQuan: false,
         khac: false,
     });
 
@@ -87,30 +117,43 @@ export default function SignUpSteps() {
 
     // Step 2
     const [formData, setFormData] = useState({
-        unitName: "",
-        email: "",
-        address: "",
-        phone: "",
-        bankAccount: "",
-        repName: "",
-        repPhone: "",
-        repEmail: "",
+        tenDonVi: "",
+        emailDonVi: "",
+        diaChiDonVi: "",
+        nganHangDonVi: "",
+        sdtDonVi: "",
+        stkDonVi: "",
+        hoTenNguoiDaiDien: "",
+        sdtNguoiDaiDien: "",
+        emailNguoiDaiDien: "",
     });
 
     const handleChange = (field: keyof typeof formData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-
     const serviceOptions: { key: ServiceKey; label: string; icon: any }[] = [
-        { key: "luutru", label: "Lưu trú", icon: "bed-outline" },
-        { key: "muasam", label: "Mua sắm", icon: "cart-outline" },
+        { key: "luuTru", label: "Lưu trú", icon: "bed-outline" },
+        { key: "muaSam", label: "Mua sắm", icon: "cart-outline" },
         { key: "anUong", label: "Ăn uống", icon: "restaurant-outline" },
-        { key: "giaitri", label: "Vui chơi - giải trí", icon: "game-controller-outline" },
-        { key: "vanchuyen", label: "Vận chuyển khách hàng", icon: "car-outline" },
-        { key: "thamquan", label: "Tham quan hướng dẫn", icon: "map-outline" },
+        { key: "giaiTri", label: "Vui chơi - giải trí", icon: "game-controller-outline" },
+        { key: "vanChuyen", label: "Vận chuyển khách hàng", icon: "car-outline" },
+        { key: "thamQuan", label: "Tham quan hướng dẫn", icon: "map-outline" },
         { key: "khac", label: "Khác", icon: "ellipsis-horizontal-outline" },
     ];
+
+    // Map ra Object cho select
+    const buildSelectedArray = () => {
+        return serviceOptions.map((item) => ({
+            key: item.key,
+            label:
+                item.key === "khac" && selected[item.key] && khacText.trim() !== ""
+                    ? khacText
+                    : item.label,
+            isSelected: selected[item.key],
+        }));
+    };
+
 
     const steps = [
         <View style={styles.stepContainer} key="step1">
@@ -165,7 +208,7 @@ export default function SignUpSteps() {
                                     outputRange: [0, 60],
                                 }),
                                 opacity: khacAnim,
-                                marginTop: 8,
+                                marginTop: 20,
                             }}
                         >
                             <TextInput
@@ -186,7 +229,7 @@ export default function SignUpSteps() {
 
         <View style={styles.stepContainer} key="step2">
             <Text style={[styles.stepText, { color: colors.text }]}>
-                Thông tin cơ bản về đơn vị của bạn
+                Thông tin cơ bản về đơn vị
             </Text>
 
             <View
@@ -207,8 +250,8 @@ export default function SignUpSteps() {
                         placeholder="Tên đơn vị"
                         placeholderTextColor="#999"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.unitName}
-                        onChangeText={text => handleChange("unitName", text)}
+                        value={formData.tenDonVi}
+                        onChangeText={text => handleChange("tenDonVi", text)}
                     />
                 </View>
 
@@ -225,8 +268,8 @@ export default function SignUpSteps() {
                         placeholderTextColor="#999"
                         keyboardType="email-address"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.email}
-                        onChangeText={text => handleChange("email", text)}
+                        value={formData.emailDonVi}
+                        onChangeText={text => handleChange("emailDonVi", text)}
                     />
                 </View>
 
@@ -242,8 +285,8 @@ export default function SignUpSteps() {
                         placeholder="Địa chỉ"
                         placeholderTextColor="#999"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.address}
-                        onChangeText={text => handleChange("address", text)}
+                        value={formData.diaChiDonVi}
+                        onChangeText={text => handleChange("diaChiDonVi", text)}
                     />
                 </View>
 
@@ -260,12 +303,50 @@ export default function SignUpSteps() {
                         placeholderTextColor="#999"
                         keyboardType="phone-pad"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.phone}
-                        onChangeText={text => handleChange("phone", text)}
+                        value={formData.sdtDonVi}
+                        onChangeText={text => handleChange("sdtDonVi", text)}
                     />
                 </View>
 
-                {/* STK thanh toán */}
+                {/* Ngân hàng + STK */}
+                <Text
+                    style={{
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        marginTop: 20,
+                        marginBottom: 10,
+                        color: colors.text,
+                    }}
+                >
+                    Thông tin thanh toán
+                </Text>
+
+                {/* Select ngân hàng */}
+                <View style={styles.inputRow}>
+                    <Ionicons
+                        name="business-outline"
+                        size={20}
+                        color={colors.text}
+                        style={styles.inputIcon}
+                    />
+                    <Dropdown
+                        style={[styles.textInput]}
+                        placeholderStyle={{ color: "#999" }}
+                        selectedTextStyle={{ color: colors.text }}
+                        data={banks.map((bank) => ({
+                            label: bank.shortName || bank.name,
+                            value: bank.code || bank.id,
+                        }))}
+                        labelField="label"
+                        valueField="value"
+                        placeholder="Chọn ngân hàng"
+                        searchPlaceholder="Tìm ngân hàng..."
+                        value={formData.nganHangDonVi}
+                        onChange={(item) => handleChange("nganHangDonVi", item.value)}
+                    />
+                </View>
+
+                {/* Nhập STK */}
                 <View style={styles.inputRow}>
                     <Ionicons
                         name="card-outline"
@@ -278,8 +359,8 @@ export default function SignUpSteps() {
                         placeholderTextColor="#999"
                         keyboardType="numeric"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.bankAccount}
-                        onChangeText={text => handleChange("bankAccount", text)}
+                        value={formData.stkDonVi}
+                        onChangeText={text => handleChange("stkDonVi", text)}
                     />
                 </View>
 
@@ -308,8 +389,8 @@ export default function SignUpSteps() {
                         placeholder="Họ và tên"
                         placeholderTextColor="#999"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.repName}
-                        onChangeText={text => handleChange("repName", text)}
+                        value={formData.hoTenNguoiDaiDien}
+                        onChangeText={text => handleChange("hoTenNguoiDaiDien", text)}
                     />
                 </View>
 
@@ -326,8 +407,8 @@ export default function SignUpSteps() {
                         placeholderTextColor="#999"
                         keyboardType="phone-pad"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.repPhone}
-                        onChangeText={text => handleChange("repPhone", text)}
+                        value={formData.sdtNguoiDaiDien}
+                        onChangeText={text => handleChange("sdtNguoiDaiDien", text)}
                     />
                 </View>
 
@@ -344,8 +425,8 @@ export default function SignUpSteps() {
                         placeholderTextColor="#999"
                         keyboardType="email-address"
                         style={[styles.textInput, { color: colors.text }]}
-                        value={formData.repEmail}
-                        onChangeText={text => handleChange("repEmail", text)}
+                        value={formData.emailNguoiDaiDien}
+                        onChangeText={text => handleChange("emailNguoiDaiDien", text)}
                     />
                 </View>
             </View>
@@ -373,27 +454,26 @@ export default function SignUpSteps() {
                 ]}
             >
                 {/* Avatar + thông tin */}
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
                     <View
                         style={{
                             width: 60,
                             height: 60,
-                            borderRadius: 30,
-                            backgroundColor: "#E3F2FD",
                             justifyContent: "center",
                             alignItems: "center",
                             marginRight: 15,
                         }}
                     >
-                        <Ionicons name="person-circle" size={50} color="#2196F3" />
+                        {/* <Ionicons name="person-circle" size={50} color="#2196F3" /> */}
+                        <Image source={require('@/assets/images/user-icon.png')} resizeMode="cover" style={{ height: 60, width: 60, borderRadius: 30 }} />
                     </View>
 
                     <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 16, fontWeight: "bold", color: colors.text }}>
-                            {formData.repName || "Chưa nhập tên người đại diện"}
+                            {formData.hoTenNguoiDaiDien || "Chưa nhập tên người đại diện"}
                         </Text>
                         <Text style={{ color: colors.text, opacity: 0.7, marginTop: 4 }}>
-                            {`Đơn vị: ` + formData.unitName || "Chưa nhập tên đơn vị"}
+                            {`Đơn vị: ` + formData.tenDonVi || "Chưa nhập tên đơn vị"}
                         </Text>
 
                         {/* Chips dịch vụ */}
@@ -455,24 +535,34 @@ export default function SignUpSteps() {
                 {/* Thông tin thêm */}
                 {expanded && (
                     <View style={{ marginTop: 12 }}>
+                        <Text
+                            style={{
+                                fontWeight: "bold",
+                                marginTop: 10,
+                                marginBottom: 6,
+                                color: colors.text,
+                            }}
+                        >
+                            Thông tin đơn vị
+                        </Text>
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
                             <Ionicons name="mail" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text }}>{formData.email || "Chưa nhập"}</Text>
+                            <Text style={{ color: colors.text }}>Email: {formData.emailDonVi || "Chưa nhập"}</Text>
                         </View>
 
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
                             <Ionicons name="location" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text }}>{formData.address || "Chưa nhập"}</Text>
+                            <Text style={{ color: colors.text }}>Địa chỉ: {formData.diaChiDonVi || "Chưa nhập"}</Text>
                         </View>
 
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
                             <Ionicons name="call" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text }}>{formData.phone || "Chưa nhập"}</Text>
+                            <Text style={{ color: colors.text }}>Số điện thoại: {formData.sdtDonVi || "Chưa nhập"}</Text>
                         </View>
 
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
                             <Ionicons name="card" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text }}>{formData.bankAccount || "Chưa nhập"}</Text>
+                            <Text style={{ color: colors.text }}>Số tài khoản: {formData.stkDonVi || "Chưa nhập"} - {formData.nganHangDonVi}</Text>
                         </View>
 
                         <Text
@@ -483,17 +573,17 @@ export default function SignUpSteps() {
                                 color: colors.text,
                             }}
                         >
-                            Người đại diện
+                            Thông tin người đại diện
                         </Text>
 
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
                             <Ionicons name="call" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text }}>{formData.repPhone || "Chưa nhập"}</Text>
+                            <Text style={{ color: colors.text }}>Số điện thoại: {formData.sdtNguoiDaiDien || "Chưa nhập"}</Text>
                         </View>
 
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
                             <Ionicons name="mail" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                            <Text style={{ color: colors.text }}>{formData.repEmail || "Chưa nhập"}</Text>
+                            <Text style={{ color: colors.text }}>Email: {formData.emailNguoiDaiDien || "Chưa nhập"}</Text>
                         </View>
                     </View>
                 )}
@@ -508,9 +598,13 @@ export default function SignUpSteps() {
                 toValue: -(step + 1) * width,
                 useNativeDriver: true,
             }).start();
+            // @ts-ignore
+            scrollViewRef.current.scrollTo({ y: 0, animated: true });
         } else {
             try {
                 Keyboard.dismiss();
+                console.log("Formdata: ", formData);
+                console.log("select chips: ", buildSelectedArray());
                 router.push("/welcome");
             } catch (error) {
                 console.error("Lỗi đăng ký:", error);
@@ -525,52 +619,57 @@ export default function SignUpSteps() {
                 toValue: -(step - 1) * width,
                 useNativeDriver: true,
             }).start();
+            // @ts-ignore
+            scrollViewRef.current.scrollTo({ y: 0, animated: true });
         }
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Image source={require('@/assets/images/tura-logo.png')} resizeMode="contain" style={{ width: '100%', height: 100 }} ></Image>
-            {/* Slider */}
-            <View style={{ flex: 1, overflow: "hidden" }}>
-                <Animated.View
-                    style={{
-                        flexDirection: "row",
-                        width: width * steps.length,
-                        transform: [{ translateX }],
-                    }}
-                >
-                    {steps.map((s, index) => (
-                        <View style={{ width, flex: 1 }} key={index}>
-                            {s}
-                        </View>
-                    ))}
-                </Animated.View>
-            </View>
-
-            {/* Buttons */}
-            <View style={styles.buttonRow}>
-                {step > 0 && (
+        // <KeyboardAvoidingView style={{ flex: 1 }}>
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <ScrollView ref={scrollViewRef}>
+                    <Image source={require('@/assets/images/tura-logo.png')} resizeMode="contain" style={{ width: '100%', height: 80 }} ></Image>
+                    {/* Slider */}
+                    <View style={{ flex: 1, overflow: "hidden" }}>
+                        <Animated.View
+                            style={{
+                                flexDirection: "row",
+                                width: width * steps.length,
+                                transform: [{ translateX }],
+                            }}
+                        >
+                            {steps.map((s, index) => (
+                                <View style={{ width, flex: 1 }} key={index}>
+                                    {s}
+                                </View>
+                            ))}
+                        </Animated.View>
+                    </View>
+                </ScrollView>
+                {/* Buttons */}
+                <View style={styles.buttonRow}>
+                    {step > 0 && (
+                        <TouchableOpacity
+                            style={[styles.button, { backgroundColor: "#ad1111ff" }]}
+                            onPress={handleBack}
+                        >
+                            <Text style={[styles.buttonText, { color: "white" }]}>
+                                Quay lại
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
-                        style={[styles.button, { backgroundColor: "#ad1111ff" }]}
-                        onPress={handleBack}
+                        disabled={!canProceed()}
+                        style={[styles.button, { backgroundColor: canProceed() ? colors.primary : "#575656ff", }]}
+                        onPress={handleNext}
                     >
-                        <Text style={[styles.buttonText, { color: "white" }]}>
-                            Quay lại
+                        <Text style={styles.buttonText}>
+                            {step === steps.length - 1 ? "Đăng ký" : "Tiếp theo"}
                         </Text>
                     </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                    disabled={!canProceed()}
-                    style={[styles.button, { backgroundColor: canProceed() ? colors.primary : "#575656ff", }]}
-                    onPress={handleNext}
-                >
-                    <Text style={styles.buttonText}>
-                        {step === steps.length - 1 ? "Đăng ký" : "Tiếp theo"}
-                    </Text>
-                </TouchableOpacity>
+                </View>
             </View>
-        </View>
+        // </KeyboardAvoidingView>
     );
 }
 
@@ -589,17 +688,18 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "bold",
         textAlign: "center",
-        marginBottom: 30,
+        marginBottom: 10,
         marginTop: 10
     },
     buttonRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginBottom: 20,
+        marginBottom: 60,
+        marginTop: 20
     },
     button: {
         flex: 1,
-        padding: 14,
+        padding: 12,
         borderRadius: 8,
         alignItems: "center",
         marginHorizontal: 15,
@@ -612,8 +712,8 @@ const styles = StyleSheet.create({
     optionButton: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 14,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
         borderWidth: 2,
         borderRadius: 10,
         width: "100%"

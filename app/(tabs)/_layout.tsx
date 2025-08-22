@@ -31,6 +31,13 @@ const menuByRole = {
     { name: 'message', title: 'Tin nhắn', icon: 'chatbubble-ellipses' },
     { name: 'personal', title: 'Cá nhân', icon: 'person' },
   ],
+  SEV: [
+    { name: 'index', title: 'Trang chủ', icon: 'home' },
+    { name: 'storage', title: 'Kho lưu trữ', icon: 'albums' },
+    { name: 'work', title: 'Công việc', icon: 'briefcase' },
+    { name: 'message', title: 'Tin nhắn', icon: 'chatbubble-ellipses' },
+    { name: 'personal', title: 'Cá nhân', icon: 'person' },
+  ]
 } as const;
 
 export default function TabLayout() {

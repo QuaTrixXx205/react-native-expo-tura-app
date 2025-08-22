@@ -40,7 +40,7 @@ export default function Personal() {
           />
           <View>
             <Text style={styles.username}>{user?.username}</Text>
-            <Text style={styles.greeting}>Bộ phận: {user?.role === 'DHTK' ? 'Điều hành - thiết kế' : user?.role === 'HDV' ? 'Hướng dẫn viên' : user?.role === 'MKT' ? 'Marketing' : ''}</Text>
+            <Text style={styles.greeting}>Bộ phận: {user?.role === 'DHTK' ? 'Điều hành - thiết kế' : user?.role === 'HDV' ? 'Hướng dẫn viên' : user?.role === 'MKT' ? 'Marketing' : 'Dịch vụ'}</Text>
           </View>
         </View>
       </LinearGradient>
