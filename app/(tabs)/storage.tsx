@@ -12,6 +12,9 @@ import HdvSchedule from '../../components/HDV_UI/hdv_schedule';
 // MKT UI Component
 import MktReport from '../../components/MKT_UI/mkt_report';
 
+// SEV UI
+import SevStorage from '@/components/SEV_UI/sev_storage';
+
 export default function Storage() {
   const { user } = useUser();
   const { colors } = useTheme();
@@ -26,7 +29,7 @@ export default function Storage() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerText}>
-              {user?.role === 'DHTK' ? 'Kho lưu trữ' : user?.role === 'HDV' ? 'Lịch trình' : user?.role === 'MKT' ? 'Báo cáo' : ''}
+              {user?.role === 'DHTK' ? 'Kho lưu trữ' : user?.role === 'HDV' ? 'Lịch trình' : user?.role === 'MKT' ? 'Báo cáo' : user?.role === 'SEV' ? 'Kho lưu trữ' : ''}
             </Text>
           </View>
         </View>
@@ -38,6 +41,7 @@ export default function Storage() {
         {user?.role === 'DHTK' && <DhtkStorage />}
         {user?.role === 'HDV' && <HdvSchedule />}
         {user?.role === 'MKT' && <MktReport />}
+        {user?.role === 'SEV' && <SevStorage />}
       </View>
     </View>
   );

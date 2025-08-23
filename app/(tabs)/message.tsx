@@ -25,7 +25,7 @@ export default function Mesage() {
             <View style={styles.headerTop}>
               <View>
                 <Text style={styles.headerText}>
-                  {user?.role === 'DHTK' ? 'Thông báo' : user?.role === 'HDV' ? 'Chat' : user?.role === 'MKT' ? 'Chat' : ''}
+                  {user?.role === 'DHTK' ? 'Thông báo' : user?.role === 'HDV' ? 'Chat' : user?.role === 'MKT' ? 'Chat' : 'Tin nhắn'}
                 </Text>
               </View>
             </View>
@@ -37,6 +37,7 @@ export default function Mesage() {
             {user?.role === 'DHTK' && <DhtkMessage />}
             {user?.role === 'HDV' && <HdvChat />}
             {user?.role === 'MKT' && <MktChat />}
+            {user?.role === 'SEV' && <MktChat />}
           </View>
     
         </View>

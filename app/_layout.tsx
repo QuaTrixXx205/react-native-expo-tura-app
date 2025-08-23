@@ -45,41 +45,41 @@ export default function RootLayout() {
           <Stack.Screen name="DhtkMenuThietKe" options={{
             title: 'Thiết kế',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
           <Stack.Screen name="DhtkMenuDieuHanh" options={{
             title: 'Điều hành',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
           <Stack.Screen name="DhtkMenuKhaoSat" options={{
             title: 'Khảo sát',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
           <Stack.Screen name="DhtkMenuDoiTac" options={{
             title: 'Đối tác',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
           {/*************/}
@@ -87,33 +87,75 @@ export default function RootLayout() {
           <Stack.Screen name="MktMenuProduct" options={{
             title: 'Sản phẩm',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
           <Stack.Screen name="MktMenuCustomer" options={{
             title: 'Dữ liệu KH',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
           <Stack.Screen name="MktMenuPaperwork" options={{
             title: 'Xử lý hợp đồng',
             headerStyle: {
-              backgroundColor: '#1565C0', 
+              backgroundColor: '#1565C0',
             },
-            headerTintColor: '#fff', 
+            headerTintColor: '#fff',
             headerTitleStyle: {
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             },
           }} />
+          {/************/}
+          <Stack.Screen name="SevMenuDichVuCungCap" options={{
+            title: 'Dịch vụ cung cấp',
+            headerStyle: {
+              backgroundColor: '#1565C0',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }} />
+          <Stack.Screen name="SevMenuKeHoach" options={{
+            title: 'Kế hoạch',
+            headerStyle: {
+              backgroundColor: '#1565C0',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }} />
+          <Stack.Screen name="SevMenuYeuCau" options={{
+            title: 'Yêu cầu',
+            headerStyle: {
+              backgroundColor: '#1565C0',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }} />
+          <Stack.Screen name="SevMenuLienLac" options={{
+            title: 'Liên lạc',
+            headerStyle: {
+              backgroundColor: '#1565C0',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }} />
+          {/* Menu Sev */}
           {/************/}
           <Stack.Screen name="+not-found" />
         </Stack>

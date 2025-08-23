@@ -12,6 +12,9 @@ import HdvReport from '../../components/HDV_UI/hdv_report';
 // MKT UI Component
 import MktWork from '../../components/MKT_UI/mkt_work';
 
+// SEV UI
+import SevWork from '@/components/SEV_UI/sev_work';
+
 export default function Work() {
   const { user } = useUser();
   const { colors } = useTheme();
@@ -26,7 +29,7 @@ export default function Work() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerText}>
-              {user?.role === 'DHTK' ? 'Công việc chung' : user?.role === 'HDV' ? 'Báo cáo' : user?.role === 'MKT' ? 'Công việc' : ''}
+              {user?.role === 'DHTK' ? 'Công việc chung' : user?.role === 'HDV' ? 'Báo cáo' : user?.role === 'MKT' ? 'Công việc' : user?.role === 'SEV' ? 'Công việc': ''}
             </Text>
           </View>
         </View>
@@ -38,6 +41,7 @@ export default function Work() {
         {user?.role === 'DHTK' && <DhtkWork />}
         {user?.role === 'HDV' && <HdvReport />}
         {user?.role === 'MKT' && <MktWork />}
+        {user?.role === 'SEV' && <SevWork />}
       </View>
 
     </View>

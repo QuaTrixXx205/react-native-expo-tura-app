@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,7 +11,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 type RootStackParamList = {
   Home: undefined;
   DhtkMenuThietKe: undefined;
-  // thêm các screen khác...
 };
 
 // Type cho navigation object
@@ -60,20 +59,26 @@ export default function HomeScreen() {
         style={styles.headerCard}
       >
         <View>
-          <View>
-            <Text style={styles.userName}>{user?.username}</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
-              <Text style={styles.dateText}>{currentDate}</Text>
-              <Text style={{color: colors.text}}>Đơn vị: Ánh sao</Text>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View>
+              <Image source={require('@/assets/images/user-icon.png')} resizeMode='contain' style={{width: 60, height: 60, borderRadius: 30, marginRight: 10}} ></Image>
             </View>
-            <Text style={{color: colors.text}}>Dịch vụ: Lưu trú - Ăn uống</Text>
+            <View>
+              <Text style={styles.userName}>{user?.username}</Text>
+              {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                <Text style={styles.dateText}>{currentDate}</Text>
+                <Text style={{color: colors.text}}>Đơn vị: Ánh sao</Text>
+              </View> */}
+              <Text style={{ color: '#fff' }}>Dịch vụ: Lưu trú - Ăn uống</Text>
+              <Text style={{ color: '#fff' }}>Đơn vị: Ánh sao</Text>
+            </View>
           </View>
         </View>
       </LinearGradient>
 
       {/* Nội dung - Role */}
       <View style={styles.content}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+        {/* <ScrollView contentContainerStyle={{ paddingBottom: 30 }}> */}
           {/* Menu action*/}
           <View>
             {user?.role === 'DHTK' && (
@@ -138,12 +143,12 @@ export default function HomeScreen() {
                 {/* Menu cho MKT */}
                 <View style={styles.featureBox}>
                   {[
-                    { icon: 'calendar-outline', label: 'Kế hoạch', },
-                    { icon: 'people-outline', label: 'Liên lạc', },
-                    { icon: 'headset-outline', label: 'Dịch vụ' },
-                    { icon: 'document-text-outline', label: 'Yêu cầu', },
+                    { icon: 'calendar-outline', label: 'Kế hoạch', screen: 'SevMenuKeHoach' },
+                    { icon: 'people-outline', label: 'Liên lạc', screen: 'SevMenuLienLac' },
+                    { icon: 'headset-outline', label: 'Dịch vụ', screen: 'SevMenuDichVuCungCap' },
+                    { icon: 'document-text-outline', label: 'Yêu cầu', screen: 'SevMenuYeuCau' },
                   ].map((item, index) => (
-                    <TouchableOpacity key={index} style={styles.featureItem}>
+                    <TouchableOpacity key={index} style={styles.featureItem} onPress={() => item.screen && navigation.navigate(item.screen as any)} >
                       <Ionicons name={item.icon as any} size={32} color="#fff" />
                       <Text style={styles.featureText}>{item.label}</Text>
                     </TouchableOpacity>
@@ -160,7 +165,7 @@ export default function HomeScreen() {
             {user?.role === 'MKT' && <MktHome />}
             {user?.role === 'SEV' && <SevHome />}
           </View>
-        </ScrollView>
+        {/* </ScrollView> */}
       </View>
 
     </View>
