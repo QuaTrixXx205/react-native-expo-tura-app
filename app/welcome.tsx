@@ -57,10 +57,7 @@ export default function WelcomeScreen() {
                     "password": password
                 }
             });
-
-            console.log(res.data);
             
-
             if (res?.data) {
                 Keyboard.dismiss();
                 setUser(res.data); // Lưu vào context

@@ -701,7 +701,6 @@ export default function SignUpSteps() {
                         }, {} as Record<string, string>)
                     }
                 });
-                // console.log()
                 // điều hướng qua trang login (welcome)
                 Keyboard.dismiss();
                 router.push("/welcome");
