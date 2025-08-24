@@ -35,6 +35,8 @@ export default function SignUpSteps() {
     const [step, setStep] = useState(0);
     const translateX = useRef(new Animated.Value(0)).current;
     const khacAnim = useRef(new Animated.Value(0)).current; // animation cho input
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     // State để toggle expand
     const [expanded, setExpanded] = useState(false);
@@ -78,6 +80,12 @@ export default function SignUpSteps() {
                 formData.sdtNguoiDaiDien.trim() &&
                 formData.emailNguoiDaiDien.trim()
             );
+        } if (step === 2) {
+            return (
+                formData.password.trim() &&
+                formData.confirmPassword.trim() &&
+                formData.password === formData.confirmPassword
+            )
         }
         return true;
     };
@@ -126,6 +134,8 @@ export default function SignUpSteps() {
         hoTenNguoiDaiDien: "",
         sdtNguoiDaiDien: "",
         emailNguoiDaiDien: "",
+        password: "",
+        confirmPassword: ""
     });
 
     const handleChange = (field: keyof typeof formData, value: string) => {
@@ -450,6 +460,7 @@ export default function SignUpSteps() {
                         shadowOpacity: 0.1,
                         shadowRadius: 4,
                         elevation: 2,
+                        marginBottom: 20
                     },
                 ]}
             >
@@ -588,10 +599,78 @@ export default function SignUpSteps() {
                     </View>
                 )}
             </View>
+
+            <View style={{ gap: 12 }}>
+                {/* Mật khẩu */}
+                <View
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderColor: colors.border,
+                        paddingHorizontal: 10,
+                        paddingVertical: 5
+                    }}
+                >
+                    <TextInput
+                        placeholder="Mật khẩu"
+                        placeholderTextColor="#999"
+                        style={{
+                            flex: 1,
+                            paddingVertical: 10,
+                            color: colors.text,
+                        }}
+                        value={formData.password}
+                        onChangeText={(text) => handleChange("password", text)}
+                        secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Ionicons
+                            name={showPassword ? "eye-off" : "eye"}
+                            size={22}
+                            color={colors.text}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Nhập lại mật khẩu */}
+                <View
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderColor: colors.border,
+                        paddingHorizontal: 10,
+                        paddingVertical: 5
+                    }}
+                >
+                    <TextInput
+                        placeholder="Nhập lại mật khẩu"
+                        placeholderTextColor="#999"
+                        style={{
+                            flex: 1,
+                            paddingVertical: 10,
+                            color: colors.text,
+                        }}
+                        value={formData.confirmPassword}
+                        onChangeText={(text) => handleChange("confirmPassword", text)}
+                        secureTextEntry={!showConfirm}
+                    />
+                    <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                        <Ionicons
+                            name={showConfirm ? "eye-off" : "eye"}
+                            size={22}
+                            color={colors.text}
+                        />
+                    </TouchableOpacity>
+                </View>
+            </View>
         </View>,
     ];
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (step < steps.length - 1) {
             setStep(step + 1);
             Animated.spring(translateX, {
@@ -602,10 +681,31 @@ export default function SignUpSteps() {
             scrollViewRef.current.scrollTo({ y: 0, animated: true });
         } else {
             try {
+                await callAPI({
+                    url: "api/v1/office/create",
+                    method: "POST",
+                    data: {
+                        "tenDonVi": formData.tenDonVi,
+                        "diaChiDonVi": formData.diaChiDonVi,
+                        "emailDonVi": formData.emailDonVi,
+                        "sdtDonVi": formData.sdtDonVi,
+                        "nganHangDonVi": formData.nganHangDonVi,
+                        "stkDonVi": formData.stkDonVi,
+                        "hoTenNguoiDaiDien": formData.hoTenNguoiDaiDien,
+                        "emailNguoiDaiDien": formData.emailNguoiDaiDien,
+                        "sdtNguoiDaiDien": formData.sdtNguoiDaiDien,
+                        "password": formData.password,
+                        "service": buildSelectedArray().reduce((acc, item) => {
+                            acc[item.key] = item.isSelected ? item.label : "false";
+                            return acc;
+                        }, {} as Record<string, string>)
+                    }
+                });
+                // console.log()
+                // điều hướng qua trang login (welcome)
                 Keyboard.dismiss();
-                console.log("Formdata: ", formData);
-                console.log("select chips: ", buildSelectedArray());
                 router.push("/welcome");
+
             } catch (error) {
                 console.error("Lỗi đăng ký:", error);
             }
@@ -626,49 +726,49 @@ export default function SignUpSteps() {
 
     return (
         // <KeyboardAvoidingView style={{ flex: 1 }}>
-            <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <ScrollView ref={scrollViewRef}>
-                    <Image source={require('@/assets/images/tura-logo.png')} resizeMode="contain" style={{ width: '100%', height: 80 }} ></Image>
-                    {/* Slider */}
-                    <View style={{ flex: 1, overflow: "hidden" }}>
-                        <Animated.View
-                            style={{
-                                flexDirection: "row",
-                                width: width * steps.length,
-                                transform: [{ translateX }],
-                            }}
-                        >
-                            {steps.map((s, index) => (
-                                <View style={{ width, flex: 1 }} key={index}>
-                                    {s}
-                                </View>
-                            ))}
-                        </Animated.View>
-                    </View>
-                </ScrollView>
-                {/* Buttons */}
-                <View style={styles.buttonRow}>
-                    {step > 0 && (
-                        <TouchableOpacity
-                            style={[styles.button, { backgroundColor: "#ad1111ff" }]}
-                            onPress={handleBack}
-                        >
-                            <Text style={[styles.buttonText, { color: "white" }]}>
-                                Quay lại
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                        disabled={!canProceed()}
-                        style={[styles.button, { backgroundColor: canProceed() ? colors.primary : "#575656ff", }]}
-                        onPress={handleNext}
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScrollView ref={scrollViewRef}>
+                <Image source={require('@/assets/images/tura-logo.png')} resizeMode="contain" style={{ width: '100%', height: 80 }} ></Image>
+                {/* Slider */}
+                <View style={{ flex: 1, overflow: "hidden" }}>
+                    <Animated.View
+                        style={{
+                            flexDirection: "row",
+                            width: width * steps.length,
+                            transform: [{ translateX }],
+                        }}
                     >
-                        <Text style={styles.buttonText}>
-                            {step === steps.length - 1 ? "Đăng ký" : "Tiếp theo"}
+                        {steps.map((s, index) => (
+                            <View style={{ width, flex: 1 }} key={index}>
+                                {s}
+                            </View>
+                        ))}
+                    </Animated.View>
+                </View>
+            </ScrollView>
+            {/* Buttons */}
+            <View style={styles.buttonRow}>
+                {step > 0 && (
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: "#ad1111ff" }]}
+                        onPress={handleBack}
+                    >
+                        <Text style={[styles.buttonText, { color: "white" }]}>
+                            Quay lại
                         </Text>
                     </TouchableOpacity>
-                </View>
+                )}
+                <TouchableOpacity
+                    disabled={!canProceed()}
+                    style={[styles.button, { backgroundColor: canProceed() ? colors.primary : "#575656ff", }]}
+                    onPress={handleNext}
+                >
+                    <Text style={styles.buttonText}>
+                        {step === steps.length - 1 ? "Đăng ký" : "Tiếp theo"}
+                    </Text>
+                </TouchableOpacity>
             </View>
+        </View>
         // </KeyboardAvoidingView>
     );
 }

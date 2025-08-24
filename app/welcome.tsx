@@ -34,45 +34,51 @@ export default function WelcomeScreen() {
 
     // Hàm xử lý đăng nhập
     const handleLogin = async () => {
-        // if (!email.trim()) {
-        //     Alert.alert("Lỗi", "Vui lòng nhập email");
-        //     return;
-        // }
-        // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        // if (!emailRegex.test(email)) {
-        //     Alert.alert("Lỗi", "Vui lòng nhập email hợp lệ");
-        //     return;
-        // }
-        // if (!password.trim()) {
-        //     Alert.alert("Lỗi", "Vui lòng nhập mật khẩu");
-        //     return;
-        // }
+        if (!email.trim()) {
+            Alert.alert("Lỗi", "Vui lòng nhập email");
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Alert.alert("Lỗi", "Vui lòng nhập email hợp lệ");
+            return;
+        }
+        if (!password.trim()) {
+            Alert.alert("Lỗi", "Vui lòng nhập mật khẩu");
+            return;
+        }
 
-        // try {
-        //     const res = await callAPI({
-        //         url: 'api/v1/auth/login',
-        //         method: 'POST',
-        //         data: { email, password }
-        //     });
+        try {
+            const res = await callAPI({
+                url: 'api/v1/office/login',
+                method: 'POST',
+                data: {
+                    "emailDonVi": email,
+                    "password": password
+                }
+            });
 
-        //     if (res?.data?.user) {
-        //         Keyboard.dismiss();
-        //         setUser(res.data.user); // Lưu vào context
-        //         router.push("/(tabs)");
-        //         setEmail('');
-        //         setPassword('');
-        //     } else {
-        //         Alert.alert("Lỗi", "Sai thông tin đăng nhập.");
-        //     }
-        // } catch (err) {
-        //     console.error("Lỗi API đăng nhập:", err);
-        //     Alert.alert("Lỗi", "Tài khoản không tồn tại hoặc thông tin đăng nhập sai.");
-        // }
+            console.log(res.data);
+            
+
+            if (res?.data) {
+                Keyboard.dismiss();
+                setUser(res.data); // Lưu vào context
+                router.push("/(tabs)");
+                setEmail('');
+                setPassword('');
+            } else {
+                Alert.alert("Lỗi", "Sai thông tin đăng nhập.");
+            }
+        } catch (err) {
+            console.error("Lỗi API đăng nhập:", err);
+            Alert.alert("Lỗi", "Tài khoản không tồn tại hoặc thông tin đăng nhập sai.");
+        }
 
         // simulate dữ liệu trả về
-        const fakeUser = { username: 'Nguyễn Hào Quang', role: 'SEV' }; 
+        // const fakeUser = { username: 'Nguyễn Hào Quang', role: 'SEV' }; 
 
-        setUser(fakeUser); 
+        // setUser(fakeUser); 
         Keyboard.dismiss();
         router.push("/(tabs)");
     };
