@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
                     {/* Email */}
                     <TextInput
                         style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-                        placeholder="Email"
+                        placeholder="Email đơn vị"
                         placeholderTextColor={colors.text}
                         value={email}
                         onChangeText={setEmail}
