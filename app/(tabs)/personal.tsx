@@ -8,21 +8,20 @@ import { useRouter } from "expo-router";
 export default function Personal() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { setUser } = useUser();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
 
   const handleLogout = () => {
-    setUser(null); // Xóa user
+    // setUser(null);
     router.replace("/welcome"); // Điều hướng
   };
 
   const menuItems = [
-    { icon: 'person-circle-outline', label: 'Thông tin cá nhân', onPress: () => {} },
-    { icon: 'analytics-outline', label: 'KPI', onPress: () => {} },
-    { icon: 'time-outline', label: 'Lịch sử hoạt động', onPress: () => {} },
-    { icon: 'alert-circle-outline', label: 'Báo cáo sự cố', onPress: () => {} },
-    { icon: 'construct-outline', label: 'Công cụ và giới thiệu', onPress: () => {} },
-    { icon: 'information-circle-outline', label: 'Phiên bản ứng dụng', onPress: () => {} },
+    { icon: 'person-circle-outline', label: 'Thông tin cá nhân', onPress: () => { } },
+    { icon: 'analytics-outline', label: 'KPI', onPress: () => { } },
+    { icon: 'time-outline', label: 'Lịch sử hoạt động', onPress: () => { } },
+    { icon: 'alert-circle-outline', label: 'Báo cáo sự cố', onPress: () => { } },
+    { icon: 'construct-outline', label: 'Công cụ và giới thiệu', onPress: () => { } },
+    { icon: 'information-circle-outline', label: 'Phiên bản ứng dụng', onPress: () => { } },
     { icon: 'log-out-outline', label: 'Đăng xuất', onPress: handleLogout },
   ];
 
@@ -39,7 +38,8 @@ export default function Personal() {
             style={styles.avatar}
           />
           <View>
-            <Text style={styles.username}>{user?.hoTenNguoiDaiDien}</Text>
+            {/* @ts-ignore */}
+            <Text style={styles.username}>{user?.hoTenNguoiDaiDien ?? ''}</Text>
             <Text style={styles.greeting}>Bộ phận: {user?.role === 'DHTK' ? 'Điều hành - thiết kế' : user?.role === 'HDV' ? 'Hướng dẫn viên' : user?.role === 'MKT' ? 'Marketing' : 'Dịch vụ'}</Text>
           </View>
         </View>

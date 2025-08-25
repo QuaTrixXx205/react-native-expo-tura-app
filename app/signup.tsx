@@ -315,6 +315,7 @@ export default function SignUpSteps() {
                         style={[styles.textInput, { color: colors.text }]}
                         value={formData.sdtDonVi}
                         onChangeText={text => handleChange("sdtDonVi", text)}
+                        maxLength={10}
                     />
                 </View>
 
@@ -419,6 +420,7 @@ export default function SignUpSteps() {
                         style={[styles.textInput, { color: colors.text }]}
                         value={formData.sdtNguoiDaiDien}
                         onChangeText={text => handleChange("sdtNguoiDaiDien", text)}
+                        maxLength={10}
                     />
                 </View>
 

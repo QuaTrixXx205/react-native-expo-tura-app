@@ -57,6 +57,8 @@ export default function WelcomeScreen() {
                     "password": password
                 }
             });
+
+            // console.log(res.data);
             
             if (res?.data) {
                 Keyboard.dismiss();
@@ -76,8 +78,8 @@ export default function WelcomeScreen() {
         // const fakeUser = { username: 'Nguyễn Hào Quang', role: 'SEV' }; 
 
         // setUser(fakeUser); 
-        Keyboard.dismiss();
-        router.push("/(tabs)");
+        // Keyboard.dismiss();
+        // router.push("/(tabs)");
     };
 
 
